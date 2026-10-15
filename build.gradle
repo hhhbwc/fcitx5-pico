@@ -1,0 +1,4 @@
+// fcitx5-pico —— 仓库根目录即模块工程
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}

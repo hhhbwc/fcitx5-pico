@@ -17,8 +17,8 @@ android {
     signingConfigs {
         release {
             // 本地调试签名；正式发布请换成你自己的 keystore（或设环境变量 FCITX5PICO_KEYSTORE）
-            def ks = System.getenv("FCITX5PICO_KEYSTORE") ?: "../keystore/debug.keystore"
-            storeFile file(ks)
+            def ks = System.getenv("FCITX5PICO_KEYSTORE") ?: "keystore/debug.keystore"
+            storeFile rootProject.file(ks)
             storePassword "picoime"
             keyAlias "resfix"
             keyPassword "picoime"

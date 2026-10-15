@@ -1,4 +1,0 @@
-// fcitx5-pico 输入法增强模块（独立子项目，不在 fcitx5-android 主构建内）
-plugins {
-    id 'com.android.application' version '8.5.2' apply false
-}
