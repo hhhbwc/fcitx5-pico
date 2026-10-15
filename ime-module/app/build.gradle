@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.hhhbwc.fcitx5pico'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.hhhbwc.fcitx5pico"
+        minSdk 29
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            // 本地调试签名；正式发布请换成你自己的 keystore（或设环境变量 FCITX5PICO_KEYSTORE）
+            def ks = System.getenv("FCITX5PICO_KEYSTORE") ?: "../keystore/debug.keystore"
+            storeFile file(ks)
+            storePassword "picoime"
+            keyAlias "resfix"
+            keyPassword "picoime"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    // Vector legacy bridge 只在运行时提供；编译期不打包
+    compileOnly files('libs/vector-legacy-xposed-api.jar')
+}
