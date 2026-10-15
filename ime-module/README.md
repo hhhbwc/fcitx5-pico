@@ -48,3 +48,8 @@ adb install app\build\outputs\apk\release\app-release.apk
 |---|---|
 | 按应用分辨率、键盘屏分辨率解锁（1x/2x/3x、密度） | pico-resfix |
 | 默认输入法保活、键盘高度比例修正 | 本模块（fcitx5 专用） |
+
+## 版本
+
+- 1.0.1 — 修复键盘高度自适应：首次高度计算发生在视图 attach 之前（拿不到键盘屏），改为 attach 时刻自动重算；新增一次性诊断日志 `heightfix: display=WxH percent=P -> Hpx`。
+- 1.0.0 — 首个版本。
