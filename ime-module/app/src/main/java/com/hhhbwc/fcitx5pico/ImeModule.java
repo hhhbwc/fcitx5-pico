@@ -206,8 +206,10 @@ public final class ImeModule implements IXposedHookLoadPackage {
                             try {
                                 if (!propEnabled(HEIGHTFIX_PROP)) return;
                                 Object fixed = fixedHeight(param.thisObject);
-                                if (fixed != null && fixed != param.getResult()) {
-                                    param.setResult(fixed);
+                                if (fixed != null) {
+                                    if (fixed != param.getResult()) param.setResult(fixed);
+                                } else {
+                                    scheduleAttachRecompute((View) param.thisObject);
                                 }
                             } catch (Throwable t) {
                                 log("heightfix failed", t);
@@ -223,14 +225,50 @@ public final class ImeModule implements IXposedHookLoadPackage {
     private static Integer fixedHeight(Object thisObject) {
         View view = (View) thisObject;
         Display display = view.getDisplay();
-        if (display == null) return null;
+        if (display == null) {
+            if (!loggedPreAttach) {
+                loggedPreAttach = true;
+                log("heightfix: first call pre-attach; queueing recompute");
+            }
+            return null;
+        }
         Point size = new Point();
         display.getRealSize(size);
         if (size.y <= 0) return null;
         int percent = heightPercent(view);
         if (percent <= 0 || percent > 100) return null;
-        return size.y * percent / 100;
+        int fixed = size.y * percent / 100;
+        if (!loggedComputed) {
+            loggedComputed = true;
+            log("heightfix: display=" + size.x + "x" + size.y
+                    + " percent=" + percent + " -> " + fixed + "px");
+        }
+        return fixed;
     }
+
+    /**
+     * The first getKeyboardHeightPx() call happens while the view is still detached, when
+     * view.getDisplay() cannot answer and the stock display-of-the-service base applies.
+     * Queue a recompute via View.post: on a detached view it runs exactly at
+     * dispatchAttachedToWindow, once the keyboard display is known.
+     */
+    private static void scheduleAttachRecompute(View view) {
+        synchronized (recomputeQueued) {
+            if (recomputeQueued.put(view, Boolean.TRUE) != null) return;
+        }
+        view.post(() -> {
+            try {
+                XposedHelpers.callMethod(view, "updateKeyboardSize");
+            } catch (Throwable t) {
+                log("attach recompute failed", t);
+            }
+        });
+    }
+
+    private static final java.util.Map<View, Boolean> recomputeQueued =
+            new java.util.WeakHashMap<>();
+    private static volatile boolean loggedPreAttach;
+    private static volatile boolean loggedComputed;
 
     /** 百分比直接读 fcitx5 的 SharedPreferences，横竖屏各取对应键，设置改动实时生效。 */
     private static int heightPercent(View view) {
