@@ -178,6 +178,7 @@ public final class ImeModule implements IXposedHookLoadPackage {
                     resolver, "default_input_method");
             if (!(current instanceof String) || !isIflyIme((String) current)) return;
             if (KEEP_TARGET.equals(current)) return;
+            if (!targetInstalled()) return;
             XposedHelpers.callStaticMethod(secure, "putStringForUser",
                     resolver, "default_input_method", KEEP_TARGET, 0);
             log("keepalive re-pinned default -> " + KEEP_TARGET);
@@ -352,15 +353,35 @@ public final class ImeModule implements IXposedHookLoadPackage {
 
     private static Object systemContentResolver() {
         try {
+            Context context = systemContext();
+            return context == null ? null : context.getContentResolver();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static Context systemContext() {
+        try {
             Object activityThread = XposedHelpers.callStaticMethod(
                     XposedHelpers.findClass("android.app.ActivityThread", null),
                     "currentActivityThread");
-            Object systemContext = activityThread == null ? null
-                    : XposedHelpers.callMethod(activityThread, "getSystemContext");
-            return systemContext == null ? null
-                    : XposedHelpers.callMethod(systemContext, "getContentResolver");
+            return activityThread == null ? null
+                    : (Context) XposedHelpers.callMethod(activityThread, "getSystemContext");
         } catch (Throwable t) {
             return null;
+        }
+    }
+
+    /** fcitx5 必须仍然安装着才允许回写默认值；无法验证时按已安装处理。 */
+    private static boolean targetInstalled() {
+        try {
+            Context context = systemContext();
+            if (context == null) return true;
+            context.getPackageManager().getApplicationInfo(
+                    KEEP_TARGET.substring(0, KEEP_TARGET.indexOf('/')), 0);
+            return true;
+        } catch (Throwable t) {
+            return false;
         }
     }
 
