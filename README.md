@@ -8,7 +8,7 @@
    - systemext 的 `Settings.Secure` 写入守卫；
    - 键盘每次弹出时主动纠偏；
    - system_server 的 IMMS 切换 / 持久化 / 启用列表三条路径。
-2. **键盘高度自适应** —— 钩住 fcitx5 的 `InputView.getKeyboardHeightPx`，把「百分比 × 主屏高度」改为「百分比 × 键盘窗口实际高度」：键盘屏无论被 pico-resfix 调成 1x / 2x / 3x，键盘都按同一 dp 比例完整渲染，不再溢出或变形。
+2. **键盘高度自适应** —— 钩住 fcitx5 的 `InputView.getKeyboardHeightPx`，把「百分比 × 主屏高度」改为「键盘窗口实际高度 − 工具栏 − 边距」的自适应填充：键盘永远精确填满面板、工具栏完整可见，1x / 2x / 3x 下键的 dp 尺寸完全一致，**无需调任何高度设置**。
 
 ## 开关与作用域
 
@@ -43,8 +43,9 @@ adb install app\build\outputs\apk\release\app-release.apk
 
 ## 版本
 
+- 1.0.3 — 键盘高度完全自适应：不再读百分比设置，网格高度 = 窗口 − 工具栏 − 边距，永远精确填满面板，用户无需调任何高度设置。
 - 1.0.2 — 修复顶部工具栏（KawaiiBar，40dp 固定）被裁：键盘高度只约束键网格，网格偏高会把工具栏顶出窗口；现在网格高度会扣除工具栏 + 底部 padding + 导航栏 inset，永不超过窗口剩余空间。
-- 1.0.1 — 修复键盘高度自适应：首次高度计算发生在视图 attach 之前（拿不到键盘屏），改为 attach 时刻自动重算；新增一次性诊断日志 `heightfix: display=WxH percent=P -> Hpx`。
+- 1.0.1 — 修复键盘高度自适应：首次高度计算发生在视图 attach 之前（拿不到键盘屏），改为 attach 时刻自动重算；新增一次性诊断日志 `heightfix: display=WxH chrome=CH -> Hpx`。
 - 1.0.0 — 首个版本。
 
 ## 仓库结构

@@ -23,10 +23,10 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  * IMMS 切换/持久化/启用列表三条路径。属性 persist.fcitx5pico.keepalive=0 可关闭。
  *
  * <p>二、键盘高度自适应——fcitx5 按"百分比 × 键盘服务看到的屏幕高度"计算键盘高度，
- * 在 PICO 上这个基准是主屏（约 1128px）而不是键盘窗口（1x=460px，2x=920px），
- * 导致键盘溢出或比例失调。本模块钩住 InputView.getKeyboardHeightPx，
- * 改用键盘窗口所在 display 的实际高度 × 百分比，窗口被 resfix 调成任何分辨率，
- * 键盘都按同一 dp 比例渲染，不再变形。属性 persist.fcitx5pico.heightfix=0 可关闭。
+ * 在 PICO 上这个基准是主屏而不是键盘窗口，导致键盘溢出或比例失调。本模块钩住
+ * InputView.getKeyboardHeightPx，改为「键盘窗口高度 − 工具栏 − 边距」的自适应填充：
+ * 键盘永远精确填满面板，resfix 把键盘屏调成任何分辨率都自动跟随，用户无需调任何
+ * 高度设置。属性 persist.fcitx5pico.heightfix=0 可关闭。
  */
 public final class ImeModule implements IXposedHookLoadPackage {
     static final String TAG = "Fcitx5Pico";
@@ -235,22 +235,17 @@ public final class ImeModule implements IXposedHookLoadPackage {
         Point size = new Point();
         display.getRealSize(size);
         if (size.y <= 0) return null;
-        int percent = heightPercent(view);
-        if (percent <= 0 || percent > 100) return null;
-        int fixed = size.y * percent / 100;
-        // InputView stacks kawaiiBar (top, 40dp const) + keyboard grid (this height) + bottom
-        // padding inside the IME window: whatever exceeds the window height pushes the bar
-        // off the top, so cap the grid to what fits next to them.
+        // Full self-adaptation: the key grid fills the window minus the KawaiiBar (40dp),
+        // the user bottom padding and any navigation bar inset. The keyboard panel's dp
+        // height is constant across resolutions (density scales with them), so this
+        // renders identically at 1x/2x/3x with no user tuning.
         int chrome = chromeHeight(view);
-        if (chrome > 0) {
-            int cap = size.y - chrome;
-            if (cap > 0 && fixed > cap) fixed = cap;
-        }
+        int fixed = size.y - chrome;
+        if (fixed <= 0) return null;
         if (!loggedComputed) {
             loggedComputed = true;
             log("heightfix: display=" + size.x + "x" + size.y
-                    + " percent=" + percent + " chrome=" + chrome
-                    + " -> " + fixed + "px");
+                    + " chrome=" + chrome + " -> " + fixed + "px (auto-fill)");
         }
         return fixed;
     }
@@ -321,22 +316,6 @@ public final class ImeModule implements IXposedHookLoadPackage {
             new java.util.WeakHashMap<>();
     private static volatile boolean loggedPreAttach;
     private static volatile boolean loggedComputed;
-
-    /** 百分比直接读 fcitx5 的 SharedPreferences，横竖屏各取对应键，设置改动实时生效。 */
-    private static int heightPercent(View view) {
-        try {
-            Context context = view.getContext().getApplicationContext();
-            SharedPreferences sp = context.getSharedPreferences(
-                    "org.fcitx.fcitx5.android_preferences", Context.MODE_PRIVATE);
-            boolean landscape = context.getResources().getConfiguration().orientation
-                    == Configuration.ORIENTATION_LANDSCAPE;
-            return landscape
-                    ? sp.getInt("keyboard_height_percent_landscape", 75)
-                    : sp.getInt("keyboard_height_percent", 75);
-        } catch (Throwable t) {
-            return -1;
-        }
-    }
 
     // ==================================================================
     // 工具
