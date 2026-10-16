@@ -43,6 +43,7 @@ adb install app\build\outputs\apk\release\app-release.apk
 
 ## 版本
 
+- 1.0.2 — 修复顶部工具栏（KawaiiBar，40dp 固定）被裁：键盘高度只约束键网格，网格偏高会把工具栏顶出窗口；现在网格高度会扣除工具栏 + 底部 padding + 导航栏 inset，永不超过窗口剩余空间。
 - 1.0.1 — 修复键盘高度自适应：首次高度计算发生在视图 attach 之前（拿不到键盘屏），改为 attach 时刻自动重算；新增一次性诊断日志 `heightfix: display=WxH percent=P -> Hpx`。
 - 1.0.0 — 首个版本。
 

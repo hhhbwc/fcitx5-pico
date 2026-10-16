@@ -238,12 +238,64 @@ public final class ImeModule implements IXposedHookLoadPackage {
         int percent = heightPercent(view);
         if (percent <= 0 || percent > 100) return null;
         int fixed = size.y * percent / 100;
+        // InputView stacks kawaiiBar (top, 40dp const) + keyboard grid (this height) + bottom
+        // padding inside the IME window: whatever exceeds the window height pushes the bar
+        // off the top, so cap the grid to what fits next to them.
+        int chrome = chromeHeight(view);
+        if (chrome > 0) {
+            int cap = size.y - chrome;
+            if (cap > 0 && fixed > cap) fixed = cap;
+        }
         if (!loggedComputed) {
             loggedComputed = true;
             log("heightfix: display=" + size.x + "x" + size.y
-                    + " percent=" + percent + " -> " + fixed + "px");
+                    + " percent=" + percent + " chrome=" + chrome
+                    + " -> " + fixed + "px");
         }
         return fixed;
+    }
+
+    /** KawaiiBar (40dp const) + user bottom padding + navigation bar inset, in px. */
+    private static int chromeHeight(View view) {
+        int density = view.getResources().getDisplayMetrics().densityDpi;
+        int chrome = kawaiiBarHeightDp(view) * density / 160;
+        try {
+            Context context = view.getContext().getApplicationContext();
+            SharedPreferences sp = context.getSharedPreferences(
+                    "org.fcitx.fcitx5.android_preferences", Context.MODE_PRIVATE);
+            boolean landscape = context.getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_LANDSCAPE;
+            int padDp = landscape
+                    ? sp.getInt("keyboard_bottom_padding_landscape", 0)
+                    : sp.getInt("keyboard_bottom_padding", 0);
+            chrome += padDp * density / 160;
+        } catch (Throwable ignored) {}
+        try {
+            android.view.WindowInsets insets = view.getRootWindowInsets();
+            if (insets != null) {
+                android.graphics.Insets nav = insets.getInsets(
+                        android.view.WindowInsets.Type.navigationBars());
+                chrome += nav.bottom;
+            }
+        } catch (Throwable ignored) {}
+        return chrome;
+    }
+
+    /** KawaiiBarComponent.HEIGHT (companion const), 40dp upstream. */
+    private static int kawaiiBarHeightDp(View view) {
+        try {
+            Class<?> kawaii = XposedHelpers.findClass(
+                    "org.fcitx.fcitx5.android.input.bar.KawaiiBarComponent",
+                    view.getClass().getClassLoader());
+            try {
+                Object companion = XposedHelpers.getStaticObjectField(kawaii, "Companion");
+                return XposedHelpers.getIntField(companion, "HEIGHT");
+            } catch (Throwable t) {
+                return XposedHelpers.getStaticIntField(kawaii, "HEIGHT");
+            }
+        } catch (Throwable t) {
+            return 40;
+        }
     }
 
     /**
