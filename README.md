@@ -19,6 +19,10 @@
 
 Vector 作用域：`com.picovr.systemext` / `android` / `org.fcitx.fcitx5.android`。
 
+## 下载
+
+从 [Releases](https://github.com/hhhbwc/fcitx5-pico/releases) 下载已签名的 `fcitx5-pico-v1.0.0.apk`。
+
 ## 构建与安装
 
 ```powershell
@@ -43,10 +47,11 @@ adb install app\build\outputs\apk\release\app-release.apk
 
 ## 版本
 
-- 1.0.3 — 键盘高度完全自适应：不再读百分比设置，网格高度 = 窗口 − 工具栏 − 边距，永远精确填满面板，用户无需调任何高度设置。
-- 1.0.2 — 修复顶部工具栏（KawaiiBar，40dp 固定）被裁：键盘高度只约束键网格，网格偏高会把工具栏顶出窗口；现在网格高度会扣除工具栏 + 底部 padding + 导航栏 inset，永不超过窗口剩余空间。
-- 1.0.1 — 修复键盘高度自适应：首次高度计算发生在视图 attach 之前（拿不到键盘屏），改为 attach 时刻自动重算；新增一次性诊断日志 `heightfix: display=WxH chrome=CH -> Hpx`。
-- 1.0.0 — 首个版本。
+- **1.0.0（首个公开版本）** —— 三层默认输入法保活 + 键盘高度完全自适应（含内部迭代 1.0.1–1.0.3 的全部修复：attach 后重算、工具栏/边距扣除、百分比路线废弃）。
+
+## 许可证
+
+本模块以 [GPL-3.0](LICENSE) 发布。`fcitx5-android/` 目录内的上游键盘源码遵循其原始许可证（详见 [fcitx5-android/](fcitx5-android/)）。
 
 ## 仓库结构
 
