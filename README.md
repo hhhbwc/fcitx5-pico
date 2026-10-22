@@ -40,7 +40,7 @@ adb install app\build\outputs\apk\release\app-release.apk
 
 | 职责 | 归属 |
 |---|---|
-| 2D 应用 + 键盘屏**分辨率解锁**（1x/1.5x/2x/3x、密度，GUI 配置，改动重启头显生效） | [hhhbw/pico-resfix](https://github.com/hhhbwc/pico-resfix) |
+| 2D 应用 + 键盘屏**分辨率解锁**（1x/1.5x/2x/3x、密度，GUI 配置，改动重启头显生效） | [hhhbwc/pico-resfix](https://github.com/hhhbwc/pico-resfix) |
 | 默认输入法保活、键盘高度比例修正（fcitx5 专用） | 本仓库 |
 
 两者都是 Vector 模块，职责互不重叠，搭配使用。
